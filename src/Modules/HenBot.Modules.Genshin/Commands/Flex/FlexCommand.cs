@@ -38,6 +38,7 @@ public class FlexCommand : BaseCommand<FlexCommandData>
 			foreach (var character in characters)
 			{
 				character.Click();
+				await Task.Delay(TimeSpan.FromSeconds(10));
 				var card = _driver.FindElement(By.XPath(@"/html/body/main/content/div[3]/div[2]/div"));
 				var screenshot = (card as ITakesScreenshot)!.GetScreenshot();
 				var file = _fileProvider.CreateTempFile(extension: ".png");
