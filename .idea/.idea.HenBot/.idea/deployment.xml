@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" serverName="Test Server" remoteFilesAllowedToDisappearOnAutoupload="false">
+    <serverData>
+      <paths name="Test Server">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/HenBot" local="$PROJECT_DIR$/HenBot.Hosts.Console/bin/Release/net6.0/linux-x64/*" />
+            <mapping local="" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>
