@@ -34,7 +34,7 @@ public class InputHandler : IInputHandler
 
 			Task.Run(() => ParseData(parserType, input))
 				.ContinueWith(result => ExecuteCommand(result, commandType))
-				.ContinueWith(result => input.Provider.SendResult(result));
+				.ContinueWith(result => input.Provider.SendResult(result.WithInputData(input)));
 		}
 		return Task.CompletedTask;
 	}
