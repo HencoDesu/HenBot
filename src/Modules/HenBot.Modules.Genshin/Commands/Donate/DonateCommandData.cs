@@ -1,6 +1,4 @@
 ﻿using HenBot.Core.Commands;
-using HenBot.Core.Commands.Parsing;
-using HenBot.Core.Extensions;
 using JetBrains.Annotations;
 
 namespace HenBot.Modules.Genshin.Commands.Donate;

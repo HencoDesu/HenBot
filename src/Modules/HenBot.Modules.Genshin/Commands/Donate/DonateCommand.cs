@@ -13,10 +13,8 @@ public class DonateCommand : BaseCommand<DonateCommandData>
 	private readonly ICurrencyProvider _currencyProvider;
 	
 	public DonateCommand(
-		DonateCommandParser dataParser,
 		IGenshinDonateProvider donateProvider,
 		ICurrencyProvider currencyProvider)
-		: base(dataParser)
 	{
 		_currencyProvider = currencyProvider;
 		_donateProvider = donateProvider;
@@ -54,10 +52,7 @@ public class DonateCommand : BaseCommand<DonateCommandData>
 			}
 		}
 
-		return new CommandResult()
-		{
-			Text = sb.AppendLine($"Это будет стоить ~{totalCost:N2} RUB. Останется {totalAmount - commandData.Amount:N0} дополнительных гемов")
-					 .ToString()
-		};
+		sb.AppendLine($"Это будет стоить ~{totalCost:N2} RUB. Останется {totalAmount - commandData.Amount:N0} дополнительных гемов");
+		return CommandResult.Ok(sb.ToString());
 	}
 }

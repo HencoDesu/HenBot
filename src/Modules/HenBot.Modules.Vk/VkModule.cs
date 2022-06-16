@@ -1,5 +1,4 @@
 ﻿using HenBot.Core.Modules;
-using HenBot.Modules.Vk.Providers;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using VkNet;

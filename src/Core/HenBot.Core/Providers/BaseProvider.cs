@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using HenBot.Core.Commands;
+using HenBot.Core.Input;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -7,18 +8,19 @@ namespace HenBot.Core.Providers;
 
 [SuppressMessage("ReSharper", "ContextualLoggerProblem")]
 public abstract class BaseProvider<TProvider>
-	: IHostedService
+	: IHostedService,
+	  IProvider
 	where TProvider : BaseProvider<TProvider>
 {
-	private readonly ICommandExecutor _commandExecutor;
+	private readonly IInputHandler _inputHandler;
 	private readonly ILogger<TProvider> _logger;
 
 	protected BaseProvider(
-		ICommandExecutor commandExecutor, 
-		ILogger<TProvider> logger)
+		ILogger<TProvider> logger, 
+		IInputHandler inputHandler)
 	{
-		_commandExecutor = commandExecutor;
 		_logger = logger;
+		_inputHandler = inputHandler;
 	}
 	
 	protected TimeSpan CheckDelay { get; } = TimeSpan.FromMilliseconds(100);
@@ -49,14 +51,11 @@ public abstract class BaseProvider<TProvider>
 	}
 
 	protected abstract Task CheckForInput();
+	
+	protected Task HandleInput(BotInput botInput) 
+		=> _inputHandler.HandleInput(botInput);
 
 	protected abstract Task HandleException(Exception exception);
-	
-	protected async Task<CommandResult> HandleInput(string input)
-	{
-		var words = input.Split();
-		var command = words.First();
-		var args = words.Skip(1).ToArray();
-		return await _commandExecutor.Execute(command, args);
-	}
+
+	public abstract Task SendResult(CommandResult commandResult);
 }

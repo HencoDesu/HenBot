@@ -1,5 +1,5 @@
 ﻿using HenBot.Core.Commands;
-using HenBot.Core.Commands.Parsing;
+using HenBot.Core.Input.Parsing;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -29,7 +29,7 @@ public interface IModuleBuilder
 	IModuleBuilder RegisterCommand<TCommand, TData, TDataParser>(string commandName)
 		where TCommand : BaseCommand<TData>
 		where TData : ICommandData, new()
-		where TDataParser : class, ICommandDataParser<TData>;
+		where TDataParser : class, IInputParser<TData>;
 
 
 	/// <summary>
