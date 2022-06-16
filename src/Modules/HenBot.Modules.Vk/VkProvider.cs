@@ -1,21 +1,20 @@
 ﻿using System.Net;
-using System.Net.Http.Headers;
 using System.Text;
 using HenBot.Core.Commands;
-using HenBot.Core.Extensions;
+using HenBot.Core.Input;
 using HenBot.Core.Providers;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using VkNet.Abstractions;
-using VkNet.Enums.SafetyEnums;
 using VkNet.Exception;
 using VkNet.Model;
 using VkNet.Model.Attachments;
+using VkNet.Model.GroupUpdate;
 using VkNet.Model.RequestParams;
 
-namespace HenBot.Modules.Vk.Providers;
+namespace HenBot.Modules.Vk;
 
 [UsedImplicitly]
 public class VkProvider 
@@ -33,11 +32,11 @@ public class VkProvider
 
 	public VkProvider(
 		ILogger<VkProvider> logger,
-		ICommandExecutor commandExecutor,
+		IInputHandler inputHandler,
 		IConfiguration configuration,
 		IMemoryCache attachmentCache,
 		IVkApi vkApi) 
-		: base(commandExecutor, logger)
+		: base(logger, inputHandler)
 	{
 		_authToken = configuration.GetRequiredSection("VK")["AuthToken"];
 		_groupId = ulong.Parse(configuration.GetRequiredSection("VK")["GroupId"]);
@@ -68,7 +67,7 @@ public class VkProvider
 
 	protected override async Task CheckForInput()
 	{
-		var lpResponse = await _vkApi.Groups.GetBotsLongPollHistoryAsync(new ()
+		var lpResponse = await _vkApi.Groups.GetBotsLongPollHistoryAsync(new BotsLongPollHistoryParams
 		{
 			Server = _server,
 			Key = _key,
@@ -77,20 +76,16 @@ public class VkProvider
 
 		foreach (var update in lpResponse.Updates)
 		{
-			if (update.Type == GroupUpdateType.MessageNew)
+			var input = update.Instance switch
 			{
-				var message = update.Message;
-				CommandResult result;
-				
-				try
-				{
-					result = await HandleInput(message.Text);
-				} catch (Exception e)
-				{
-					result = new CommandResult { Text = e.Message };
-				}
-
-				await SendResponse(message, result);
+				Message message => ReadInput(message),
+				MessageNew messageNew => ReadInput(messageNew.Message),
+				_ => null
+			};
+			
+			if (input is not null)
+			{
+				await HandleInput(input);
 			}
 		}
 
@@ -105,43 +100,57 @@ public class VkProvider
 		}
 	}
 
-	private async Task SendResponse(Message message, CommandResult result)
+	private BotInput ReadInput(Message message) 
+		=> new VkInput(this, message);
+	
+	public override async Task SendResult(CommandResult commandResult)
 	{
-		if (result.IsEmpty)
+		if (commandResult.IsEmpty || 
+			commandResult.InputData is not VkInput vkInput)
 		{
 			return;
-		}
-
-		List<MediaAttachment> attachments = new ();
-		foreach (var attachmentFile in result.AttachmentFiles)
-		{
-			if (_attachmentCache.TryGetValue(attachmentFile.Name, out MediaAttachment attachment))
-			{
-				attachments.Add(attachment);
-				continue;
-			}
-
-			var uploadServer = _vkApi.Photo.GetMessagesUploadServer((long) _groupId);
-			var uploadedFile = await UploadFile(
-				uploadServer.UploadUrl,
-				attachmentFile);
-			var response = _vkApi.Photo.SaveMessagesPhoto(uploadedFile);
-			attachment = response.Single();
-			_attachmentCache.Set(attachmentFile.Name, attachment);
-			attachments.Add(attachment);
 		}
 		
 		await _vkApi.Messages.SendAsync(new MessagesSendParams
 		{
-			Attachments = attachments,
-			Message = result.Text,
-			PeerId = message.PeerId,
+			Attachments = await GetAttachments(commandResult.AttachmentFiles).ToListAsync(),
+			Message = commandResult.Text,
+			PeerId = vkInput.Message.PeerId,
 			RandomId = _random.NextInt64(),
-			ReplyTo = message.Id
+			ReplyTo = vkInput.Message.Id
 		});
 	}
-	
-	private static async Task<string> UploadFile(string serverUrl, FileInfo fileInfo)
+
+	private async IAsyncEnumerable<MediaAttachment> GetAttachments(IEnumerable<FileInfo>? attachmentFiles)
+	{
+		if (attachmentFiles is null)
+		{
+			yield break;
+		}
+		
+		foreach (var attachmentFile in attachmentFiles)
+		{
+			if (_attachmentCache.TryGetValue(attachmentFile.Name, out MediaAttachment attachment))
+			{
+				yield return attachment;
+			} else
+			{
+				yield return await UploadAttachment(attachmentFile);
+			}
+		}
+	}
+
+	private async Task<MediaAttachment> UploadAttachment(FileSystemInfo fileInfo)
+	{
+		var uploadServer = _vkApi.Photo.GetMessagesUploadServer((long) _groupId);
+		var uploadedFile = await UploadFile(uploadServer.UploadUrl, fileInfo);
+		var response = _vkApi.Photo.SaveMessagesPhoto(uploadedFile);
+		var attachment = response.Single();
+		_attachmentCache.Set(fileInfo.Name, attachment);
+		return attachment;
+	}
+
+	private static async Task<string> UploadFile(string serverUrl, FileSystemInfo fileInfo)
 	{
 		using var client = new WebClient();
 		var response = await client.UploadFileTaskAsync(serverUrl, fileInfo.FullName);
