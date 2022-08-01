@@ -1,40 +1,49 @@
-﻿using HenBot.Core.Commands;
-using HenBot.Core.Input;
-using HenBot.Core.Providers;
+﻿using HenBot.Core.Messaging;
+using HenBot.Core.Messaging.Handling;
+using HenBot.Core.Messaging.Messages;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 
 namespace HenBot.Hosts.Console;
 
 [UsedImplicitly]
-public class ConsoleProvider 
-	: BaseProvider<ConsoleProvider>
+public class ConsoleProvider
+	: MessageProviderBase
 {
 	public ConsoleProvider(
 		ILogger<ConsoleProvider> logger,
-		IInputHandler inputHandler) 
+		IInputMessageHandler inputHandler)
 		: base(logger, inputHandler)
 	{ }
-	
-	protected override async Task CheckForInput()
+
+	/// <inheritdoc />
+	protected override Task CheckForInput()
 	{
-		var input = ReadInput(System.Console.ReadLine()!);
-		await HandleInput(input);
+		var input = System.Console.ReadLine();
+
+		if (!string.IsNullOrEmpty(input))
+		{
+			var message = new InputMessage
+			{
+				Provider = this,
+				MessageText = input
+			};
+			OnInputReceived(message);
+		}
+		
+		return Task.CompletedTask;
 	}
 
-	protected override Task HandleException(Exception exception)
+	/// <inheritdoc />
+	protected override Task HandleInputException(Exception e)
 	{
 		return Task.CompletedTask;
 	}
 
-	public override Task SendResult(CommandResult commandResult)
+	/// <inheritdoc />
+	protected override Task SendOutput(OutputMessage outputMessage)
 	{
-		System.Console.WriteLine(commandResult.Text);
+		System.Console.WriteLine(outputMessage.MessageText);
 		return Task.CompletedTask;
-	}
-
-	private BotInput ReadInput(string consoleMessage)
-	{
-		return new ConsoleInput(this, consoleMessage);
 	}
 }

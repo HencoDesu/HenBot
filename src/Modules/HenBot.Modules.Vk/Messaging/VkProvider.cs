@@ -1,8 +1,8 @@
 ﻿using System.Net;
 using System.Text;
-using HenBot.Core.Commands;
-using HenBot.Core.Input;
-using HenBot.Core.Providers;
+using HenBot.Core.Messaging;
+using HenBot.Core.Messaging.Handling;
+using HenBot.Core.Messaging.Messages;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -14,11 +14,11 @@ using VkNet.Model.Attachments;
 using VkNet.Model.GroupUpdate;
 using VkNet.Model.RequestParams;
 
-namespace HenBot.Modules.Vk;
+namespace HenBot.Modules.Vk.Messaging;
 
 [UsedImplicitly]
 public class VkProvider 
-	: BaseProvider<VkProvider>
+	: MessageProviderBase
 {
 	private readonly Random _random = new();
 	private readonly ILogger<VkProvider> _logger;
@@ -32,7 +32,7 @@ public class VkProvider
 
 	public VkProvider(
 		ILogger<VkProvider> logger,
-		IInputHandler inputHandler,
+		IInputMessageHandler inputHandler,
 		IConfiguration configuration,
 		IMemoryCache attachmentCache,
 		IVkApi vkApi) 
@@ -45,7 +45,7 @@ public class VkProvider
 		_vkApi = vkApi;
 	}
 
-	public override async Task StartAsync(CancellationToken cancellationToken)
+	public override async Task EnableAsync()
 	{
 		try
 		{
@@ -62,7 +62,7 @@ public class VkProvider
 		}
 		
 		
-		await base.StartAsync(cancellationToken);
+		await base.EnableAsync();
 	}
 
 	protected override async Task CheckForInput()
@@ -85,14 +85,14 @@ public class VkProvider
 			
 			if (input is not null)
 			{
-				await HandleInput(input);
+				OnInputReceived(input);
 			}
 		}
 
 		_ts = lpResponse.Ts;
 	}
 
-	protected override async Task HandleException(Exception exception)
+	protected override async Task HandleInputException(Exception exception)
 	{
 		if (exception is LongPollKeyExpiredException)
 		{
@@ -100,21 +100,26 @@ public class VkProvider
 		}
 	}
 
-	private BotInput ReadInput(Message message) 
-		=> new VkInput(this, message);
+	private InputMessage ReadInput(Message message) 
+		=> new VkInputMessage
+		{
+			Provider = this,
+			Message = message,
+		};
 	
-	public override async Task SendResult(CommandResult commandResult)
+	protected override async Task SendOutput(OutputMessage outputMessage)
 	{
-		if (commandResult.IsEmpty || 
-			commandResult.InputData is not VkInput vkInput)
+		if (outputMessage.IsEmpty || 
+			outputMessage.OriginalMessage is not VkInputMessage vkInput ||
+			vkInput.Message is null)
 		{
 			return;
 		}
 		
 		await _vkApi.Messages.SendAsync(new MessagesSendParams
 		{
-			Attachments = await GetAttachments(commandResult.AttachmentFiles).ToListAsync(),
-			Message = commandResult.Text,
+			Attachments = await GetAttachments(outputMessage.Attachments).ToListAsync(),
+			Message = outputMessage.MessageText,
 			PeerId = vkInput.Message.PeerId,
 			RandomId = _random.NextInt64(),
 			ReplyTo = vkInput.Message.Id

@@ -6,6 +6,7 @@ namespace HenBot.Core.Modules;
 /// Абстракция для модулей бота
 /// </summary>
 [PublicAPI]
+[UsedImplicitly(ImplicitUseTargetFlags.WithInheritors | ImplicitUseTargetFlags.Default)]
 public interface IModule
 {
 	/// <summary>

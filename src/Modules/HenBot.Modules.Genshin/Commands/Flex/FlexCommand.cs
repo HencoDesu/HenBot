@@ -7,7 +7,7 @@ using OpenQA.Selenium;
 namespace HenBot.Modules.Genshin.Commands.Flex;
 
 [UsedImplicitly]
-public class FlexCommand : BaseCommand<FlexCommandData>
+public class FlexCommand : CommandBase<FlexCommandData>
 {
 	private readonly IFileProvider _fileProvider;
 	private readonly IWebDriver _driver;
@@ -20,7 +20,7 @@ public class FlexCommand : BaseCommand<FlexCommandData>
 		_driver = driver;
 	}
 
-	protected override async Task<CommandResult> Execute(FlexCommandData commandData)
+	public override async Task<CommandResult> ExecuteAsync(FlexCommandData commandData)
 	{
 		_driver.Navigate().GoToUrl($"https://enka.shinshin.moe/u/{commandData.Uid}");
 
@@ -40,7 +40,8 @@ public class FlexCommand : BaseCommand<FlexCommandData>
 
 		_driver.Quit();
 
-		return CommandResult.Ok("Флекс писюнами")
-							.WithAttachments(cards);
+		return CommandResult.New
+							.AppendMessage("Флекс писюнами")
+							.AddAttachments(cards);
 	}
 }

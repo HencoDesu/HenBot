@@ -1,14 +1,9 @@
-﻿using FluentResults;
-using HenBot.Core.Commands;
+﻿namespace HenBot.Core.Commands.Parsing;
 
-namespace HenBot.Core.Input.Parsing;
-
-public interface IPropertyParser<TData>
+public interface IPropertyParser<in TData>
 	where TData : ICommandData
 {
-	Task<Result<TData>> Parse(
-		Result<TData> previousResult,
-		IParsableCommandData input);
+	Task<List<string>> TryParse(TData data, ParsableCommandData input);
 }
 
 public interface IPropertyParser<TData, TProperty> 
@@ -17,7 +12,7 @@ public interface IPropertyParser<TData, TProperty>
 {
 	IPropertyParser<TData, TProperty> MapIf(
 		Func<TData, bool> condition,
-		Func<IParsableCommandData, Task<TProperty>> mapFunc);
+		Func<ParsableCommandData, Task<TProperty>> mapFunc);
 	
 	IPropertyParser<TData, TProperty> DefaultValue(TProperty value);
 
@@ -32,7 +27,7 @@ public static class PropertyParserExtensions
 {
 	public static IPropertyParser<TData, TProperty> Map<TData, TProperty>(
 		this IPropertyParser<TData, TProperty> propertyParser,
-		Func<IParsableCommandData, TProperty> mapFunc)
+		Func<ParsableCommandData, TProperty> mapFunc)
 		where TData : ICommandData
 		=> propertyParser.MapIf(_ => true, data => Task.FromResult(mapFunc(data)));
 	

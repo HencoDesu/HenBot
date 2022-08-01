@@ -1,54 +1,36 @@
 ﻿using System.Text;
-using FluentResults;
-using HenBot.Core.Input;
+using HenBot.Core.Extensions;
 
 namespace HenBot.Core.Commands;
 
 public class CommandResult
 {
-	private CommandResult(string text)
+	private readonly StringBuilder _textBuilder;
+	private readonly List<FileInfo> _attachments;
+
+	private CommandResult()
 	{
-		Text = text;
+		_textBuilder = new StringBuilder();
+		_attachments = new List<FileInfo>();
 	}
+
+	public static CommandResult New => new ();
+
+	public string Text 
+		=> _textBuilder.ToString();
+
+	public IReadOnlyList<FileInfo> Attachments 
+		=> _attachments;
+
+	public CommandResult AppendMessage(string message)
+		=> this.Do(r => r._textBuilder.AppendLine(message));
 	
-	public string Text { get; }
+	public CommandResult AppendMessages(IEnumerable<string> messages)
+		=> this.Do(r => r._textBuilder.AppendLines(messages));
 
-	public List<FileInfo>? AttachmentFiles { get; private set; }
+	public CommandResult AddAttachment(FileInfo attachment)
+		=> this.Do(r => r._attachments.Add(attachment));
 
-	public bool IsEmpty => string.IsNullOrEmpty(Text) && 
-						   (AttachmentFiles is null || AttachmentFiles.Count == 0);
-	
-	public BotInput? InputData { get; private set; }
-
-	public static CommandResult Ok(string message = "")
-		=> new(message);
-
-	public static CommandResult Error(Exception e)
-		=> new(e.Message);
-
-	public static CommandResult Error<TResult>(Result<TResult> result)
-	{
-		var sb = new StringBuilder();
-		foreach (var error in result.Errors)
-		{
-			sb.AppendLine(error.Message);
-		}
-
-		return new CommandResult(sb.ToString());
-	}
-	
-	public static implicit operator Task<CommandResult>(CommandResult result) 
-		=> Task.FromResult(result);
-
-	public CommandResult WithInputData(BotInput inputData)
-	{
-		InputData = inputData;
-		return this;
-	}
-
-	public CommandResult WithAttachments(List<FileInfo> attachments)
-	{
-		AttachmentFiles = attachments;
-		return this;
-	}
+	public CommandResult AddAttachments(IEnumerable<FileInfo> attachments)
+		=> this.Do(r => r._attachments.AddRange(attachments));
 }

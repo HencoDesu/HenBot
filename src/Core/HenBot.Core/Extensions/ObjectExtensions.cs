@@ -15,4 +15,12 @@ public static class ObjectExtensions
 			property.SetValue(@object, propertyValue);
 		}
 	}
+
+	public static TObject Do<TObject>(
+		this TObject @object,
+		Action<TObject> action)
+	{
+		action(@object);
+		return @object;
+	}
 }

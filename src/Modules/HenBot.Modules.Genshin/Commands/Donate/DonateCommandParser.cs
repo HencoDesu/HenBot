@@ -1,10 +1,10 @@
-﻿using HenBot.Core.Input.Parsing;
+﻿using HenBot.Core.Commands.Parsing;
 using JetBrains.Annotations;
 
 namespace HenBot.Modules.Genshin.Commands.Donate;
 
 [UsedImplicitly]
-public class DonateCommandParser : InputParser<DonateCommandData>
+public class DonateCommandParser : CommandDataParser<DonateCommandData>
 {
 	public DonateCommandParser() : base(() => new DonateCommandData())
 	{

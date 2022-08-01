@@ -7,7 +7,7 @@ using JetBrains.Annotations;
 namespace HenBot.Modules.Genshin.Commands.Donate;
 
 [UsedImplicitly]
-public class DonateCommand : BaseCommand<DonateCommandData>
+public class DonateCommand : CommandBase<DonateCommandData>
 {
 	private readonly IGenshinDonateProvider _donateProvider;
 	private readonly ICurrencyProvider _currencyProvider;
@@ -20,7 +20,7 @@ public class DonateCommand : BaseCommand<DonateCommandData>
 		_donateProvider = donateProvider;
 	}
 
-	protected override async Task<CommandResult> Execute(DonateCommandData commandData)
+	public override async Task<CommandResult> ExecuteAsync(DonateCommandData commandData)
 	{
 		var currency = await _currencyProvider.GetCurrency(commandData.Currency);
 
@@ -53,6 +53,6 @@ public class DonateCommand : BaseCommand<DonateCommandData>
 		}
 
 		sb.AppendLine($"Это будет стоить ~{totalCost:N2} RUB. Останется {totalAmount - commandData.Amount:N0} дополнительных гемов");
-		return CommandResult.Ok(sb.ToString());
+		return CommandResult.New.AppendMessage(sb.ToString());
 	}
 }

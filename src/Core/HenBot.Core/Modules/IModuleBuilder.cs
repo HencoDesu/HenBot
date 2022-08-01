@@ -1,5 +1,6 @@
 ﻿using HenBot.Core.Commands;
-using HenBot.Core.Input.Parsing;
+using HenBot.Core.Commands.Parsing;
+using HenBot.Core.Messaging;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,7 +18,7 @@ public interface IModuleBuilder
 	/// <typeparam name="TCommand">Тип команды</typeparam>
 	/// <returns>Текущий экземпляр <see cref="IModuleBuilder"/></returns>
 	IModuleBuilder RegisterCommand<TCommand>() 
-		where TCommand : BaseCommand;
+		where TCommand : CommandBase;
 
 	/// <summary>
 	/// Регистрирует в боте команду cо сложными аргументами и парсером для них
@@ -25,11 +26,19 @@ public interface IModuleBuilder
 	/// <typeparam name="TCommand">Тип команды</typeparam>
 	/// <typeparam name="TData">Тип данных</typeparam>
 	/// <typeparam name="TDataParser">Тип парсера</typeparam>
-	/// <returns></returns>
+	/// <returns>Текущий экземпляр <see cref="IModuleBuilder"/></returns>
 	IModuleBuilder RegisterCommand<TCommand, TData, TDataParser>(string commandName)
-		where TCommand : BaseCommand<TData>
+		where TCommand : CommandBase<TData>
 		where TData : ICommandData, new()
-		where TDataParser : class, IInputParser<TData>;
+		where TDataParser : class, ICommandDataParser<TData>;
+
+	/// <summary>
+	/// Регистрирует в боте провайдера
+	/// </summary>
+	/// <typeparam name="TProvider">Тип провайдера</typeparam>
+	/// <returns>Текущий экземпляр <see cref="IModuleBuilder"/></returns>
+	IModuleBuilder RegisterProvider<TProvider>()
+		where TProvider : class, IMessagesProvider;
 
 
 	/// <summary>

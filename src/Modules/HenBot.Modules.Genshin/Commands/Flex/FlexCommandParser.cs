@@ -1,10 +1,10 @@
-﻿using HenBot.Core.Input.Parsing;
+﻿using HenBot.Core.Commands.Parsing;
 using JetBrains.Annotations;
 
 namespace HenBot.Modules.Genshin.Commands.Flex;
 
 [UsedImplicitly]
-public class FlexCommandParser : InputParser<FlexCommandData>
+public class FlexCommandParser : CommandDataParser<FlexCommandData>
 {
 	public FlexCommandParser() : base(() => new FlexCommandData())
 	{

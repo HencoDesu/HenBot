@@ -1,4 +1,5 @@
 ﻿using HenBot.Core.Extensions;
+using HenBot.Core.Messaging;
 using HenBot.Hosts.Console;
 using HenBot.Modules.Genshin;
 using HenBot.Modules.Vk;
@@ -42,7 +43,7 @@ await Host.CreateDefaultBuilder(args)
 				  return new FirefoxDriver(Path.Combine("Drivers"), options);
 			  });
 		  #if DEBUG
-			  services.AddHostedService<ConsoleProvider>();
+			  services.AddSingleton<IMessagesProvider, ConsoleProvider>();
 		  #endif
 		  })
 		  .UseSystemd()

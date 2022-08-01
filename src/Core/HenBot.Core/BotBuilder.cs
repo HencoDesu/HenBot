@@ -1,9 +1,7 @@
-﻿using System.Collections.Concurrent;
-using HenBot.Core.Input;
+﻿using HenBot.Core.Messaging.Handling;
 using HenBot.Core.Modules;
 using HenBot.Core.Providers.FileProvider;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using IModule = HenBot.Core.Modules.IModule;
 
 namespace HenBot.Core;
@@ -11,29 +9,24 @@ namespace HenBot.Core;
 public class BotBuilder : IBotBuilder
 {
 	private readonly IServiceCollection _serviceCollection;
-	private readonly IDictionary<string, (Type, Type)> _commands;
+	private readonly IDictionary<string, Type> _parsers;
+	private readonly IDictionary<string, Type> _commands;
 
 	public BotBuilder(IServiceCollection serviceCollection)
 	{
-		_commands = new ConcurrentDictionary<string, (Type, Type)>();
+		_parsers = new Dictionary<string, Type>();
+		_commands = new Dictionary<string, Type>();
 		
 		_serviceCollection = serviceCollection;
-		_serviceCollection.AddSingleton<IInputHandler>(CreateInputHandler)
+		_serviceCollection.AddSingleton<IInputMessageHandler, InputMessageHandler>()
 						  .AddSingleton<IFileProvider, FileProvider>();
 	}
 
 	public IBotBuilder UseModule<TModule>() 
 		where TModule : class, IModule
 	{
-		var moduleBuilder = new ModuleBuilder(_serviceCollection, _commands);
+		var moduleBuilder = new ModuleBuilder(_serviceCollection, _parsers, _commands);
 		TModule.Init(moduleBuilder);
 		return this;
-	}
-	
-	private InputHandler CreateInputHandler(IServiceProvider provider)
-	{
-		return new InputHandler(_commands,
-								provider.CreateScope(),
-								provider.GetRequiredService<ILogger<InputHandler>>());
 	}
 }
