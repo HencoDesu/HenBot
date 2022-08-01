@@ -16,6 +16,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\Core\HenBot.Core\HenBot.Core.csproj" />
+      <ProjectReference Include="..\..\Libs\EnkaNetworkLib\EnkaNetworkLib.csproj" />
     </ItemGroup>
 
 </Project>

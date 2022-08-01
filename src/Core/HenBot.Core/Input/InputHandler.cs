@@ -1,5 +1,6 @@
 ﻿using FluentResults;
 using HenBot.Core.Commands;
+using HenBot.Core.Commands.Result;
 using HenBot.Core.Extensions;
 using HenBot.Core.Input.Parsing;
 using JetBrains.Annotations;
@@ -33,8 +34,8 @@ public class InputHandler : IInputHandler
 			var (parserType, commandType) = item;
 
 			Task.Run(() => ParseData(parserType, input))
-				.ContinueWith(result => ExecuteCommand(result, commandType))
-				.ContinueWith(result => input.Provider.SendResult(result.WithInputData(input)));
+				.ContinueWith(result => ExecuteCommand(input, result, commandType))
+				.ContinueWith(result => input.Provider.SendResult(result));
 		}
 		return Task.CompletedTask;
 	}
@@ -45,22 +46,35 @@ public class InputHandler : IInputHandler
 		return parser.ParseData(input);
 	}
 
-	private Task<CommandResult> ExecuteCommand(Result<ICommandData> dataParsingResult, Type commandType)
+	private async Task<CommandResult> ExecuteCommand(BotInput input, IResult<ICommandData> dataParsingResult, Type commandType)
 	{
+		var resultBuilder = new CommandResultBuilder(input);
+
 		if (dataParsingResult.IsFailed)
 		{
-			return CommandResult.Error(dataParsingResult);
+			foreach (var error in dataParsingResult.Errors)
+			{
+				resultBuilder.WithMessage(error.Message);
+			}
+
+			return resultBuilder.Build();
 		}
 
-		var data = dataParsingResult.Value;
-		var command = (BaseCommand) _scope.ServiceProvider.GetRequiredService(commandType);
+		if (_scope.ServiceProvider.GetRequiredService(commandType) is not BaseCommand command)
+		{
+			return resultBuilder.WithMessage("Command not found")
+								.Build();
+		}
+		
+		var context = command.GenerateContext(input, dataParsingResult.Value);
 		try
 		{
-			return command.Execute(data);
+			return await command.Execute(context);
 		} catch (Exception e)
 		{
-			_logger.LogError(e, "Error while handling {CommandName}", commandType.Name);
-			return CommandResult.Error(e);
+			var message = $"Error while handling {commandType.Name}";
+			_logger.LogError(e, message);
+			return resultBuilder.WithMessage(message).Build();
 		}
 	}
 }

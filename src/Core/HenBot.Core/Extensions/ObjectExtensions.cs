@@ -15,4 +15,13 @@ public static class ObjectExtensions
 			property.SetValue(@object, propertyValue);
 		}
 	}
+
+	public static TObject FluentAction<TObject>(this TObject @object, Action<TObject> action)
+	{
+		action(@object);
+		return @object;
+	}
+
+	public static Task<TObject> AsTask<TObject>(this TObject @object)
+		=> Task.FromResult(@object);
 }

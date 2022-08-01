@@ -1,4 +1,5 @@
-﻿using HenBot.Core.Modules;
+﻿using EnkaNetworkLib;
+using HenBot.Core.Modules;
 using HenBot.Modules.Genshin.Commands.Donate;
 using HenBot.Modules.Genshin.Commands.Flex;
 using HenBot.Modules.Genshin.Services.CurrencyProvider;
@@ -22,7 +23,8 @@ public class GenshinModule : IModule
 						 services.TryAddTransient<IMemoryCache, MemoryCache>();
 
 						 services.AddSingleton<ICurrencyProvider, CentralBankOfRussia>()
-								 .AddSingleton<IGenshinDonateProvider, GenshinDonateProvider>();
+								 .AddSingleton<IGenshinDonateProvider, GenshinDonateProvider>()
+								 .AddSingleton<IEnkaNetworkClient, EnkaNetworkClient>();
 					 });
 	}
 }

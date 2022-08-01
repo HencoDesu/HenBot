@@ -33,6 +33,8 @@ await Host.CreateDefaultBuilder(args)
 		  })
 		  .ConfigureServices((_, services) =>
 		  {
+			  services.AddTransient<HttpClient>();
+
 			  services.AddTransient<IWebDriver>(_ =>
 			  {
 				  var options = new FirefoxOptions();

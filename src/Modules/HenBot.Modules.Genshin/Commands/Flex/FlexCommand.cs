@@ -1,8 +1,7 @@
-﻿using HenBot.Core.Commands;
-using HenBot.Core.Extensions;
+﻿using EnkaNetworkLib;
+using HenBot.Core.Commands;
 using HenBot.Core.Providers.FileProvider;
 using JetBrains.Annotations;
-using OpenQA.Selenium;
 
 namespace HenBot.Modules.Genshin.Commands.Flex;
 
@@ -10,37 +9,24 @@ namespace HenBot.Modules.Genshin.Commands.Flex;
 public class FlexCommand : BaseCommand<FlexCommandData>
 {
 	private readonly IFileProvider _fileProvider;
-	private readonly IWebDriver _driver;
+	private readonly IEnkaNetworkClient _enkaNetworkClient;
 
 	public FlexCommand(
 		IFileProvider fileProvider,
-		IWebDriver driver)
+		IEnkaNetworkClient enkaNetworkClient)
 	{
 		_fileProvider = fileProvider;
-		_driver = driver;
+		_enkaNetworkClient = enkaNetworkClient;
 	}
 
-	protected override async Task<CommandResult> Execute(FlexCommandData commandData)
+	protected override async Task<CommandResult> Execute(CommandContext<FlexCommandData> commandContext)
 	{
-		_driver.Navigate().GoToUrl($"https://enka.shinshin.moe/u/{commandData.Uid}");
+		var profile = await _enkaNetworkClient.GetProfileInfo(commandContext.Data.Uid);
+		var firstCharacter = await _enkaNetworkClient.GetCharacterInfo(profile.Characters.First().CharacterId);
+		var firstCharacterName = await _enkaNetworkClient.GetLocalization(firstCharacter.NameTextMapHash.ToString(), "RU");
 
-		var characters = _driver.FindElements(By.CssSelector(@"div .avatar")).ToList();
-
-		var cards = new List<FileInfo>();
-		foreach (var character in characters)
-		{
-			character.Click();
-			await Task.Delay(TimeSpan.FromSeconds(10));
-			var card = _driver.FindElement(By.XPath(@"/html/body/main/content/div[3]/div[2]/div"));
-			var screenshot = (card as ITakesScreenshot)!.GetScreenshot();
-			var file = _fileProvider.CreateTempFile(extension: ".png");
-			await file.WriteBytes(screenshot.AsByteArray);
-			cards.Add(file);
-		}
-
-		_driver.Quit();
-
-		return CommandResult.Ok("Флекс писюнами")
-							.WithAttachments(cards);
+		return commandContext.ExecutionResult
+							 .WithMessage($"Флекс писюном {profile.PlayerInfo.Nickname}")
+							 .WithMessage($"Первый персонаж: {firstCharacterName}");
 	}
 }
