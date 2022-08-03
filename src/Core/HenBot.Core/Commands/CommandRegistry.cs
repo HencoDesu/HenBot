@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace HenBot.Core.Commands;
 
-public class CommandRegistry
+public class CommandRegistry : ICommandRegistry
 {
 	private readonly IDictionary<string, Type> _parserMapping;
 	private readonly IDictionary<string, Type> _commandMapping;

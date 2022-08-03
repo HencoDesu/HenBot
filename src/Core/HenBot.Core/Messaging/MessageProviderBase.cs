@@ -48,9 +48,11 @@ public abstract class MessageProviderBase
 
 	protected void OnInputReceived(InputMessage inputMessage)
 	{
-		_inputHandler.HandleMessage(inputMessage)
-					 .ThenAsync(result => result.HasValue ? SendOutput(result.Value) : Task.CompletedTask)
-					 .Start();
+		Task.Factory.StartNew(async () =>
+		{
+			await _inputHandler.HandleMessage(inputMessage)
+							   .ThenAsync(result => result.HasValue ? SendOutput(result.Value) : Task.CompletedTask);
+		});
 	}
 
 	protected abstract Task SendOutput(OutputMessage outputMessage);

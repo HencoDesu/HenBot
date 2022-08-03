@@ -19,8 +19,10 @@ public abstract class CommandDataParser<TData>
 	}
 	
 	Task<Result<ICommandData>> ICommandDataParser.ParseData(InputMessage input)
-		=> ParseData(input).ThenAsync(result => result.ToResult<ICommandData>());
-	
+	{
+		return ParseData(input).ThenAsync(result => result.ToResult<ICommandData>(v => v));
+	}
+
 	public async Task<Result<TData>> ParseData(InputMessage input)
 	{
 		var data = _creatorFunc();

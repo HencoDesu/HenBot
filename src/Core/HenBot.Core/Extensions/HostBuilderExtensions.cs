@@ -5,6 +5,7 @@ namespace HenBot.Core.Extensions;
 
 public static class HostBuilderExtensions
 {
+	[Obsolete]
 	public static IHostBuilder UseHenBot(this IHostBuilder hostBuilder, Action<IBotBuilder> configure)
 	{
 		hostBuilder.ConfigureServices((_, services) =>
@@ -16,5 +17,17 @@ public static class HostBuilderExtensions
 		});
 		
 		return hostBuilder;
+	}
+
+	public static IServiceCollection UseHenBot(
+		this IServiceCollection serviceCollection,
+		Action<IBotBuilder> configure)
+	{
+		var botBuilder = new BotBuilder(serviceCollection);
+		configure(botBuilder);
+
+		serviceCollection.AddHostedService<HenBot>();
+
+		return serviceCollection;
 	}
 }

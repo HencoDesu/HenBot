@@ -8,11 +8,11 @@ namespace HenBot.Core.Messaging.Handling;
 public class InputMessageHandler : IInputMessageHandler
 {
 	private readonly ILogger<InputMessageHandler> _logger;
-	private readonly CommandRegistry _commandRegistry;
+	private readonly ICommandRegistry _commandRegistry;
 
 	public InputMessageHandler(
 		ILogger<InputMessageHandler> logger,
-		CommandRegistry commandRegistry)
+		ICommandRegistry commandRegistry)
 	{
 		_logger = logger;
 		_commandRegistry = commandRegistry;

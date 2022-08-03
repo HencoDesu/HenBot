@@ -1,6 +1,8 @@
 ﻿using HenBot.Core.Modules;
+using HenBot.Modules.Vk.Messaging;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using VkNet;
 using VkNet.Abstractions;
 
@@ -11,12 +13,9 @@ public class VkModule : IModule
 {
 	public static void Init(IModuleBuilder moduleBuilder)
 	{
-		moduleBuilder.ConfigureServices(services =>
+		moduleBuilder.RegisterProvider<VkProvider>().ConfigureServices(services =>
 		{
-			services.AddTransient<IVkApi>(_ => new VkApi(services));
-		#if RELEASE
-			services.AddHostedService<VkProvider>();
-		#endif
+			services.AddTransient<IVkApi>(p => new VkApi(p.GetRequiredService<ILogger<VkApi>>()));
 		});
 	}
 }

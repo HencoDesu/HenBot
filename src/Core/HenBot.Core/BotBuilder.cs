@@ -1,4 +1,5 @@
-﻿using HenBot.Core.Messaging.Handling;
+﻿using HenBot.Core.Commands;
+using HenBot.Core.Messaging.Handling;
 using HenBot.Core.Modules;
 using HenBot.Core.Providers.FileProvider;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +20,7 @@ public class BotBuilder : IBotBuilder
 		
 		_serviceCollection = serviceCollection;
 		_serviceCollection.AddSingleton<IInputMessageHandler, InputMessageHandler>()
+						  .AddSingleton<ICommandRegistry>(p => new CommandRegistry(p.CreateScope(), _parsers, _commands))
 						  .AddSingleton<IFileProvider, FileProvider>();
 	}
 
